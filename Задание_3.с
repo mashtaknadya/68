@@ -1,0 +1,45 @@
+/*Задача 3. Рекурсивный обход
+Напишите программу, которая рекурсивно обходит все подкаталоги и выводит полное
+дерево файловой системы с отступами (как команда tree). Глубину вложенности показывайте пробелами или символами.*/
+
+#include <stdio.h>
+#include <stdlib.h>
+#include <dirent.h>
+#include <string.h>
+#include <sys/stat.h>
+
+void print_tree(const char *path, int level) {
+    DIR *dir;
+    struct dirent *entry;
+    struct stat st;
+    char fullpath[1024];
+    
+    dir = opendir(path);
+    if (!dir) return;
+    
+    while ((entry = readdir(dir)) != NULL) {
+        if (strcmp(entry->d_name, ".") == 0 || strcmp(entry->d_name, "..") == 0)
+            continue;
+
+        for (int i = 0; i < level; i++)
+            printf("  ");
+        printf("├── %s", entry->d_name);
+        
+        snprintf(fullpath, sizeof(fullpath), "%s/%s", path, entry->d_name);
+        if (stat(fullpath, &st) == 0 && S_ISDIR(st.st_mode)) {
+            printf("/\n");
+            print_tree(fullpath, level + 1);
+        } else {
+            printf("\n");
+        }
+    }
+    
+    closedir(dir);
+}
+
+int main(int argc, char *argv[]) {
+    char *path = (argc == 2) ? argv[1] : ".";
+    printf("%s\n", path);
+    print_tree(path, 0);
+    return 0;
+}
