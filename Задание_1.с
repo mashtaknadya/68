@@ -1,0 +1,57 @@
+/*Задача 1. Открытие и чтение каталога
+Напишите программу, которая:
+Принимает путь к каталогу как аргумент командной строки
+Открывает этот каталог с помощью opendir()
+Выводит на экран имена всех файлов и подкаталогов внутри
+Корректно закрывает каталог через closedir()*/
+
+
+#include <stdio.h>
+#include <stdlib.h>
+#include <dirent.h>
+#include <errno.h>
+#include <string.h>
+#include <sys/stat.h>
+
+int main(int argc, char *argv[]) {
+    DIR *dir;
+    struct dirent *entry;
+    struct stat file_stat;
+    char full_path[PATH_MAX];
+    
+    if (argc != 2) {
+        fprintf(stderr, "использование: %s <путь_к_каталогу>\n", argv[0]);
+        return EXIT_FAILURE;
+    }
+    
+    dir = opendir(argv[1]);
+    if (dir == NULL) {
+        fprintf(stderr, "ошибка: %s\n", strerror(errno));
+        return EXIT_FAILURE;
+    }
+    
+    printf("Каталог: %s\n", argv[1]);
+    printf("----------------------------------------\n");
+    
+    while ((entry = readdir(dir)) != NULL) {
+        if (strcmp(entry->d_name, ".") == 0 || strcmp(entry->d_name, "..") == 0)
+            continue;
+        
+        snprintf(full_path, sizeof(full_path), "%s/%s", argv[1], entry->d_name);
+        
+        if (stat(full_path, &file_stat) == 0) {
+            if (S_ISDIR(file_stat.st_mode))
+                printf("[DIR]  %s\n", entry->d_name);
+            else
+                printf("[FILE] %s\n", entry->d_name);
+        } else {
+            printf("[?]    %s\n", entry->d_name);
+        }
+    }
+    
+    closedir(dir);
+    printf("----------------------------------------\n");
+    printf("Каталог закрыт.\n");
+    
+    return EXIT_SUCCESS;
+}
