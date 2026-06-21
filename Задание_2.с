@@ -1,0 +1,49 @@
+/*Задача 2. Фильтрация содержимого
+Модифицируйте программу из задачи 1 так, чтобы она выводила только обычные файлы 
+(не каталоги, не ссылки и т.д.). Используйте поле d_type структуры dirent.*/
+
+#include <stdio.h>
+#include <stdlib.h>
+#include <dirent.h>
+#include <errno.h>
+#include <string.h>
+#include <sys/stat.h>
+
+int main(int argc, char *argv[]) {
+    DIR *dir;
+    struct dirent *entry;
+    int file_count = 0;
+    
+    if (argc != 2) {
+        fprintf(stderr, "использование: %s <путь_к_каталогу>\n", argv[0]);
+        return EXIT_FAILURE;
+    }
+    
+    dir = opendir(argv[1]);
+    if (dir == NULL) {
+        perror("opendir");
+        return EXIT_FAILURE;
+    }
+    
+    printf("обычные файлы в '%s':\n", argv[1]);
+    printf("----------------------------------------\n");
+    
+    while ((entry = readdir(dir)) != NULL) {
+        // Пропускаем . и ..
+        if (strcmp(entry->d_name, ".") == 0 || strcmp(entry->d_name, "..") == 0)
+            continue;
+        
+        if (entry->d_type == DT_REG) {
+            printf("%s\n", entry->d_name);
+            file_count++;
+        }
+    }
+    
+    closedir(dir);
+    
+    printf("----------------------------------------\n");
+    printf("найдено обычных файлов: %d\n", file_count);
+    printf("каталог закрыт.\n");
+    
+    return EXIT_SUCCESS;
+}
