@@ -1,0 +1,48 @@
+/*Задача 5. Поиск по имени
+Напишите программу, которая:
+Принимает путь к каталогу и подстроку для поиска
+Рекурсивно ищет все файлы, в имени которых содержится эта подстрока
+Выводит полные абсолютные пути к найденным файлам*/
+
+#include <stdio.h>
+#include <stdlib.h>
+#include <dirent.h>
+#include <string.h>
+#include <sys/stat.h>
+
+void search(const char *path, const char *sub) {
+    DIR *dir = opendir(path);
+    if (!dir) return;
+    
+    struct dirent *entry;
+    struct stat st;
+    char fullpath[1024];
+    
+    while ((entry = readdir(dir)) != NULL) {
+        if (strcmp(entry->d_name, ".") == 0 || strcmp(entry->d_name, "..") == 0)
+            continue;
+        
+        snprintf(fullpath, sizeof(fullpath), "%s/%s", path, entry->d_name);
+        
+        if (stat(fullpath, &st) == -1)
+            continue;
+        
+        if (S_ISDIR(st.st_mode)) {
+            search(fullpath, sub);
+        } else if (strstr(entry->d_name, sub) != NULL) {
+            printf("%s\n", fullpath);
+        }
+    }
+    
+    closedir(dir);
+}
+
+int main(int argc, char *argv[]) {
+    if (argc != 3) {
+        fprintf(stderr, "использование: %s <путь> <подстрока>\n", argv[0]);
+        return 1;
+    }
+    
+    search(argv[1], argv[2]);
+    return 0;
+}
